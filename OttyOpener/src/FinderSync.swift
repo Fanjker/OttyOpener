@@ -20,11 +20,10 @@ class FinderSync: FIFinderSync {
         item.image = icon
         menu.addItem(item)
 
-        // 「复制当前路径」：SF Symbol 链接图标（更简约，缩小至 12pt 与 App 图标观感协调）
+        // 「复制当前路径」：无图标，但保留透明占位图让文字与上一项左对齐
         let copyItem = NSMenuItem(title: "复制当前路径", action: #selector(copyPath(_:)), keyEquivalent: "")
         copyItem.target = self
-        copyItem.image = NSImage(systemSymbolName: "link", accessibilityDescription: "复制路径")?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 12, weight: .regular))
+        copyItem.image = NSImage(size: NSSize(width: 16, height: 16))
         menu.addItem(copyItem)
 
         return menu

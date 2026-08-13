@@ -17,7 +17,7 @@
 | 右键文件夹 | 用 Otty 打开该文件夹 | 复制该文件夹路径 |
 | 右键文件 | 用 Otty 打开文件所在目录 | 复制**文件本身**的完整路径 |
 
-- 菜单图标：Otty 官方应用图标（运行时从 `/Applications/Otty.app` 实时读取，Otty 更新图标自动跟随）+ SF Symbol `link`（12pt 缩小，观感协调）。
+- 菜单图标：「打开 Otty」使用 Otty 官方应用图标（运行时从 `/Applications/Otty.app` 实时读取，Otty 更新图标自动跟随）；「复制当前路径」无图标（透明占位图保持文字左对齐）。
 - 复制格式：不带尾部斜杠的绝对路径（如 `/Users/name/Code/project`）。
 
 ## 安装与使用

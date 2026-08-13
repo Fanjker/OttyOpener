@@ -8,7 +8,7 @@
 **需求**：在 macOS 访达（Finder）中任意目录 —— 包括**空白处右键** —— 的右键菜单中显示两项：「打开 Otty」用终端软件 Otty 打开当前目录；「复制当前路径」把路径复制到剪贴板。要求后台无感知运行：无菜单栏图标、无窗口、无 Dock 图标、无常驻可见进程。
 
 **现状（2026-08 已完成并验证）**：
-- 已实现为原生 **FinderSync 访达扩展**，菜单项图标分别为 Otty 官方应用图标（运行时通过 `NSWorkspace.icon(forFile:)` 从 `/Applications/Otty.app` 读取并缩放到 16×16，Otty 更新图标会自动跟随）和 SF Symbol `link`（`pointSize: 12` 缩小，与 App 图标观感协调）。
+- 已实现为原生 **FinderSync 访达扩展**，菜单项图标：「打开 Otty」为 Otty 官方应用图标（运行时通过 `NSWorkspace.icon(forFile:)` 从 `/Applications/Otty.app` 读取并缩放到 16×16，Otty 更新图标会自动跟随）；「复制当前路径」无图标，用透明占位图（16×16 空 NSImage）保持文字与其他菜单项左对齐。
 - 行为：
   - 「打开 Otty」：空白处右键 → 当前目录；右键文件夹 → 该文件夹；右键文件 → 文件所在目录（目录解析见 `resolvedDirectoryURL()`）。
   - 「复制当前路径」：空白处右键 → 当前目录；右键文件夹 → 该文件夹路径；**右键文件 → 文件本身的完整路径**（路径解析见 `resolvedCopyURL()`）。
