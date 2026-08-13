@@ -12,6 +12,17 @@ class FinderSync: FIFinderSync {
     override func menu(for menuKind: FIMenuKind) -> NSMenu {
         let menu = NSMenu(title: "")
 
+        // 「复制当前路径」：无图标，但保留透明占位图让文字与下一项左对齐。
+        // 注意：必须用带绘制内容的图像（drawingHandler 栅格化），空 NSImage 跨进程传给 Finder 时会被丢弃，不占位。
+        let copyItem = NSMenuItem(title: "复制当前路径", action: #selector(copyPath(_:)), keyEquivalent: "")
+        copyItem.target = self
+        copyItem.image = NSImage(size: NSSize(width: 16, height: 16), flipped: false) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+            return true
+        }
+        menu.addItem(copyItem)
+
         // 「打开 Otty」：使用 Otty 官方应用图标（从 Otty.app 实时读取，随其更新自动跟随）
         let item = NSMenuItem(title: "打开 Otty", action: #selector(openOtty(_:)), keyEquivalent: "")
         item.target = self
@@ -19,12 +30,6 @@ class FinderSync: FIFinderSync {
         icon.size = NSSize(width: 16, height: 16)
         item.image = icon
         menu.addItem(item)
-
-        // 「复制当前路径」：无图标，但保留透明占位图让文字与上一项左对齐
-        let copyItem = NSMenuItem(title: "复制当前路径", action: #selector(copyPath(_:)), keyEquivalent: "")
-        copyItem.target = self
-        copyItem.image = NSImage(size: NSSize(width: 16, height: 16))
-        menu.addItem(copyItem)
 
         return menu
     }
