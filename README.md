@@ -1,44 +1,29 @@
-# 访达右键菜单「打开 Otty + 复制当前路径」— 项目交接文档
+# 访达右键菜单增强（OttyOpener）
 
-> 本文档面向接管此项目的任何人（或大模型）。读完本文即可理解全部背景、原理、构建/安装流程和已知坑点，无需任何额外上下文。
+> macOS Finder 右键菜单扩展：一键「打开 Otty」进入当前目录、「复制当前路径」到剪贴板。支持**空白处右键**。
 
-## 需求与现状
+## 解决的痛点
 
-**需求**：在 macOS 访达（Finder）中任意目录 —— 包括**空白处右键** —— 的右键菜单中显示两项：「打开 Otty」用终端软件 Otty 打开当前目录；「复制当前路径」把路径复制到剪贴板。要求后台无感知运行：无菜单栏图标、无窗口、无 Dock 图标、无常驻可见进程。
+- **Finder 原生右键菜单没有"在此处打开终端"和"复制路径"**：日常在访达里找目录、复制路径、再切到终端粘贴，操作链又长又繁琐。本扩展把这两步直接放进右键菜单。
+- **空白处右键也能用**：Finder 的 Automator 快速操作只对"选中的项目"生效——在目录空白处右键时什么都不会出现。FinderSync 扩展是 macOS 上唯一能在**空白处右键菜单**添加菜单项的机制。
+- **后台无感运行**：无菜单栏图标、无窗口、无 Dock 图标、无常驻可见进程，由访达按需加载，零资源占用。
+- **无 Xcode 也能构建**：项目用 `swiftc` 直接编译 + 手工组装 .app 结构 + ad-hoc 签名，只有 Command Line Tools 的机器也能一键构建安装。
 
-**现状（2026-08 已完成并验证）**：
-- 已实现为原生 **FinderSync 访达扩展**，菜单项图标分别为 Otty 官方应用图标（运行时通过 `NSWorkspace.icon(forFile:)` 从 `/Applications/Otty.app` 读取并缩放到 16×16，Otty 更新图标会自动跟随）和 SF Symbol `link`（`pointSize: 12` 缩小，与 App 图标观感协调）。
-- 行为：
-  - 「打开 Otty」：空白处右键 → 当前目录；右键文件夹 → 该文件夹；右键文件 → 文件所在目录（目录解析见 `resolvedDirectoryURL()`）。
-  - 「复制当前路径」：空白处右键 → 当前目录；右键文件夹 → 该文件夹路径；**右键文件 → 文件本身的完整路径**（路径解析见 `resolvedCopyURL()`）。
-- 安装于 `/Applications/OttyOpener.app`（空壳宿主 App，用户无需打开它），扩展由访达按需加载。
+## 功能特性
 
-## 为什么这样实现
+| 操作 | 「打开 Otty」 | 「复制当前路径」 |
+| --- | --- | --- |
+| 空白处右键 | 用 Otty 打开当前目录 | 复制当前目录路径 |
+| 右键文件夹 | 用 Otty 打开该文件夹 | 复制该文件夹路径 |
+| 右键文件 | 用 Otty 打开文件所在目录 | 复制**文件本身**的完整路径 |
 
-- macOS 上**唯一**能往访达「空白处右键菜单」加菜单项的机制是 FinderSync 扩展（`FIFinderSync`）。Automator 快速操作只对"选中的项目"生效（本项目第一版就是快速操作，后已删除避免重复入口）。
-- 本机（用户电脑）**没有安装完整 Xcode**，只有 Command Line Tools（`xcode-select -p` → `/Library/Developer/CommandLineTools`），因此没有用 Xcode 工程，而是用 `swiftc` 直接编译二进制、手工组装 .app/.appex 目录结构、ad-hoc 签名（`codesign -s -`）。整套流程都在 `build.sh` 里。
-- Otty（`/Applications/Otty.app`，bundle id `io.appmakes.otty`）在 Info.plist 中声明接受 `public.folder` 文档类型，因此把目录 URL 直接交给它（等效 `open -a Otty <目录>`）即可打开并进入该目录。
+- 菜单图标：Otty 官方应用图标（运行时从 `/Applications/Otty.app` 实时读取，Otty 更新图标自动跟随）+ SF Symbol `link`（12pt 缩小，观感协调）。
+- 复制格式：不带尾部斜杠的绝对路径（如 `/Users/name/Code/project`）。
 
-## 文件结构
-
-```
-/Users/fanjk/Code/右键菜单/OttyOpener/
-├── build.sh              # 一键构建脚本（编译 + 组装 + 签名）
-├── build/                # 构建产物（build.sh 每次重建）
-│   └── OttyOpener.app
-└── src/
-    ├── FinderSync.swift  # 扩展本体：菜单构造（两个菜单项）+ 打开 Otty + 复制路径的逻辑
-    ├── main.swift        # 宿主 App：无界面，启动 5 秒后自动退出（仅用于让系统发现扩展）
-    ├── App-Info.plist    # 宿主 App 的 Info.plist（LSUIElement=true，bundle id: local.ottyopener）
-    ├── Ext-Info.plist    # 扩展的 Info.plist（NSExtensionPointIdentifier=com.apple.FinderSync，
-    │                     #   bundle id: local.ottyopener.finderext，principal class: OttyFinderExtension.FinderSync）
-    └── ext.entitlements  # ⚠️ 关键：com.apple.security.app-sandbox=true（见"坑点"）
-```
-
-## 构建与安装（完整流程）
+## 安装与使用
 
 ```zsh
-cd "/Users/fanjk/Code/右键菜单/OttyOpener"
+cd OttyOpener
 ./build.sh                                          # 产出 build/OttyOpener.app
 rm -rf /Applications/OttyOpener.app
 cp -R build/OttyOpener.app /Applications/
@@ -50,9 +35,40 @@ killall Finder                                      # 重启访达加载扩展
 ```
 
 验证：
+
 ```zsh
 pluginkit -m -i local.ottyopener.finderext   # 应输出 "+  local.ottyopener.finderext(1.0)"，+ 表示已启用
 pgrep -fl OttyFinderExtension                # 应有进程（由访达托管）
+```
+
+> 注意：Otty（`/Applications/Otty.app`）需要已安装。换其他终端 App 见下文「常见修改」。
+
+---
+
+# 维护指南（面向维护者）
+
+> 读完本文即可理解全部背景、原理、构建/安装流程和已知坑点，无需任何额外上下文。
+
+## 为什么这样实现
+
+- macOS 上**唯一**能往访达「空白处右键菜单」加菜单项的机制是 FinderSync 扩展（`FIFinderSync`）。Automator 快速操作只对"选中的项目"生效（本项目第一版就是快速操作，后已删除避免重复入口）。
+- 本机（用户电脑）**没有安装完整 Xcode**，只有 Command Line Tools（`xcode-select -p` → `/Library/Developer/CommandLineTools`），因此没有用 Xcode 工程，而是用 `swiftc` 直接编译二进制、手工组装 .app/.appex 目录结构、ad-hoc 签名（`codesign -s -`）。整套流程都在 `build.sh` 里。
+- Otty（`/Applications/Otty.app`，bundle id `io.appmakes.otty`）在 Info.plist 中声明接受 `public.folder` 文档类型，因此把目录 URL 直接交给它（等效 `open -a Otty <目录>`）即可打开并进入该目录。
+
+## 文件结构
+
+```
+OttyOpener/
+├── build.sh              # 一键构建脚本（编译 + 组装 + 签名）
+├── build/                # 构建产物（build.sh 每次重建，不入库）
+│   └── OttyOpener.app
+└── src/
+    ├── FinderSync.swift  # 扩展本体：菜单构造（两个菜单项）+ 打开 Otty + 复制路径的逻辑
+    ├── main.swift        # 宿主 App：无界面，启动 5 秒后自动退出（仅用于让系统发现扩展）
+    ├── App-Info.plist    # 宿主 App 的 Info.plist（LSUIElement=true，bundle id: local.ottyopener）
+    ├── Ext-Info.plist    # 扩展的 Info.plist（NSExtensionPointIdentifier=com.apple.FinderSync，
+    │                     #   bundle id: local.ottyopener.finderext，principal class: OttyFinderExtension.FinderSync）
+    └── ext.entitlements  # ⚠️ 关键：com.apple.security.app-sandbox=true（见"坑点"）
 ```
 
 ## 坑点记录（重要，均为实测踩过的）
