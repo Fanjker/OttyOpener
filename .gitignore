@@ -1,0 +1,5 @@
+# macOS
+.DS_Store
+
+# 构建产物（用 ./build.sh 自行构建）
+OttyOpener/build/
